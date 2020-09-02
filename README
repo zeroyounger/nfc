@@ -1,0 +1,40 @@
+CRAPTO1
+
+implementation of the attack specified in 
+
+Dismantling MIFARE Classic
+Flavio D. Garcia, Gerhard de Koning Gans, Ruben Muijrers,
+Peter van Rossum, Roel Verdult, Ronny Wichers Schreur, and Bart Jacobs
+Institute for Computing and Information Sciences,
+Radboud University Nijmegen, The Netherlands
+{flaviog,petervr,ronny,bart}@cs.ru.nl
+{gkoningg,rmuijrer,rverdult}@sci.ru.nl
+http://www.sos.cs.ru.nl/applications/rfid/2008-esorics.pdf
+
+
+open source implementation by bla <blapost@gmail.com>
+
+this should allow you to decrypt the communications between common 
+cards like the oyster car, ov-chip, ... and their readers.
+As well as recover their secret key.
+
+The code is not yet fully optimized, it will take about 5 seconds,
+and a good chunk of memory.
+
+
+CRYPTO1 API:
+crypto1_init(key) : initialize a Crypto1State with the secret key
+crypto1_word: retrieve 32 bits of cyphertext, supports injection and feedback
+crypto1_get_lfsr: retrieve the current state of the lfsr, informational only
+prng_successor: helper function that is used during the authentication
+
+CRAPTO1 API:
+lfsr_recovery: given 64bits of keystream recover the state of the lfsr
+lfsr_rollback: roll back the lfsr, eventually until you retrieve the secret key
+
+
+for more information check test.c
+
+tested on gcc, YMMV, pacthes welcome
+
+greets to smashthestack.org	
