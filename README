@@ -38,3 +38,6 @@ for more information check test.c
 tested on gcc, YMMV, pacthes welcome
 
 greets to smashthestack.org	
+
+
+tag并不需要知道nr明文，只需要知道enc_nr的密文就可以进行下一步运算，得到新的lfsr
