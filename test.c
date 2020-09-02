@@ -29,9 +29,9 @@ struct TestCase{
 	/* sent by tag */
 	uint32_t uid, nt; 
 	/* sent by reader */
-	uint32_t nr_enc, nr, reader_response;
+	uint32_t nr_enc, nr, ar;
 	/* sent by tag */
-	uint32_t tag_response;
+	uint32_t at;
 	uint32_t data[5];
 } tc[] = {
 		{0xffffffffffffULL,
@@ -51,34 +51,43 @@ int main (void)
 {
 	struct Crypto1State state, revstate;
 	uint32_t k, tresp, rresp, rchal;
-	uint32_t ks2, ks3;
+	uint32_t ks0, ks1, ks2, ks3;
 	uint64_t lfsr;
 
 	for (k = 0; k < NUMTESTS; k++)
 	{
 		printf("Test case %d:\n", k);
 		//on the tag
+		printf("on the tag\n");
 		crypto1_init(&state, tc[k].key);
-		crypto1_word(&state, tc[k].uid ^ tc[k].nt, 0); // ks1
-		crypto1_word(&state, tc[k].nr_enc, 1);
+		crypto1_word(&state, tc[k].uid ^ tc[k].nt, 0); // ks0
+		ks1 = crypto1_word(&state, tc[k].nr_enc, 1);
 		rresp = prng_successor(tc[k].nt, 64); // suc64
-		rresp ^= crypto1_word (&state, 0, 0); // ks2
+		ks2 = crypto1_word (&state, 0, 0); // ks2
+		printf("ks2:%08x\n", ks2);
+		rresp ^= ks2;
 
-		if(rresp == tc[k].reader_response)
+		if(rresp == tc[k].ar)
 			printf("TAG> Reader is authentic.\n");
 		else
 			printf("TAG> Reader is NOT authentic.\n");
 
 
 		//in the reader
+		printf("in the reader\n");
 		crypto1_init(&state, tc[k].key);
 		crypto1_word(&state, tc[k].uid ^ tc[k].nt, 0);
-		rchal = crypto1_word(&state, tc[k].nr, 0);
-		rresp = prng_successor(tc[k].nt, 64);
-		rresp ^= crypto1_word (&state, 0, 0);
-		tresp = prng_successor(tc[k].nt, 96);
-		tresp ^= crypto1_word (&state, 0, 0);
-		if(tresp == tc[k].tag_response)
+		rchal = crypto1_word(&state, tc[k].nr, 0); //ks1
+		printf("ks1:%08x\n", rchal);
+		rresp = prng_successor(tc[k].nt, 64); // suc64
+		ks2 = crypto1_word (&state, 0, 0); // ks2
+		printf("ks2:%08x\n", ks2);
+		rresp ^= ks2;
+		tresp = prng_successor(tc[k].nt, 96); // suc96
+		ks3 = crypto1_word (&state, 0, 0); // ks3
+		printf("ks3:%08x\n", ks3);
+		tresp ^= ks3;
+		if(tresp == tc[k].at)
 			printf("Reader> Tag is authentic.\n");
 		else
 			printf("Reader> Tag is NOT authentic.\n");
@@ -87,9 +96,11 @@ int main (void)
 		//sniffing and extracting ks2 and ks3
 		crypto1_init(&state, tc[k].key);
 		crypto1_word(&state, tc[k].uid ^ tc[k].nt, 0);
-		crypto1_word(&state, tc[k].nr_enc, 1);
+		ks1 = crypto1_word(&state, tc[k].nr_enc, 1);
 		ks2 = crypto1_word(&state, 0, 0);
 		ks3 = crypto1_word(&state, 0, 0);
+		printf("ks2:%08x\n", ks2);
+		printf("ks3:%08x\n", ks3);
 
 
 		//reverse, and compute the current lsfr state from keystream
